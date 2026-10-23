@@ -1,37 +1,151 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My To-Do List</title>
-
-    <link rel="stylesheet" href="style.css">
-
-    <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2ff;
+            margin: 0;
+            padding: 40px 15px;
+        }
+        .container {
+            max-width: 550px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px #0001;
+        }
+        h1 { text-align: center; color: #4338ca; }
+        .input-area { display: flex; gap: 8px; }
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+        }
+        button {
+            padding: 11px 15px;
+            border: 0;
+            border-radius: 7px;
+            cursor: pointer;
+            background: #4f46e5;
+            color: white;
+        }
+        ul { padding: 0; list-style: none; }
+        li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f3f4f6;
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 7px;
+        }
+        li span { flex: 1; overflow-wrap: anywhere; }
+        li.done span {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .delete { background: #dc2626; }
+        .complete { background: #16a34a; }
+        .empty { text-align: center; color: #777; }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>📝 My To-Do List</h1>
+        <p>Organize your day, one task at a time!</p>
 
-<div class="container">
+        <div class="input-area">
+            <input id="taskInput" type="text"
+                   placeholder="Enter your task...">
+            <button onclick="addTask()">Add</button>
+        </div>
 
-    <h1>📝 My To-Do List</h1>
-
-    <div class="input-area">
-
-        <input
-        type="text"
-        id="taskInput"
-        placeholder="Enter your task">
-
-        <button id="addBtn">Add</button>
-
+        <ul id="taskList"></ul>
+        <p id="emptyMessage" class="empty">No tasks yet. Add one!</p>
     </div>
 
-    <ul id="taskList"></ul>
+    <script>
+        const input = document.getElementById("taskInput");
+        const list = document.getElementById("taskList");
+        const emptyMessage = document.getElementById("emptyMessage");
 
-</div>
+        let tasks = JSON.parse(localStorage.getItem("todoTasks") || "[]");
 
-<script src="script.js"></script>
+        function saveTasks() {
+            localStorage.setItem("todoTasks", JSON.stringify(tasks));
+        }
 
+        function renderTasks() {
+            list.innerHTML = "";
+            emptyMessage.style.display = tasks.length ? "none" : "block";
+
+            tasks.forEach((task, index) => {
+                const li = document.createElement("li");
+                if (task.done) li.classList.add("done");
+
+                const complete = document.createElement("button");
+                complete.className = "complete";
+                complete.textContent = task.done ? "Undo" : "Done";
+                complete.onclick = () => {
+                    tasks[index].done = !tasks[index].done;
+                    saveTasks();
+                    renderTasks();
+                };
+
+                const span = document.createElement("span");
+                span.textContent = task.text;
+
+                const edit = document.createElement("button");
+                edit.textContent = "Edit";
+                edit.onclick = () => {
+                    const updated = prompt("Edit task:", task.text);
+                    if (updated !== null && updated.trim()) {
+                        tasks[index].text = updated.trim();
+                        saveTasks();
+                        renderTasks();
+                    }
+                };
+
+                const del = document.createElement("button");
+                del.className = "delete";
+                del.textContent = "Delete";
+                del.onclick = () => {
+                    tasks.splice(index, 1);
+                    saveTasks();
+                    renderTasks();
+                };
+
+                li.append(complete, span, edit, del);
+                list.appendChild(li);
+            });
+        }
+
+        function addTask() {
+            const text = input.value.trim();
+            if (!text) {
+                alert("Please enter a task!");
+                return;
+            }
+            tasks.push({ text: text, done: false });
+            input.value = "";
+            saveTasks();
+            renderTasks();
+        }
+
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter") addTask();
+        });
+
+        renderTasks();
+    </script>
 </body>
 </html>
